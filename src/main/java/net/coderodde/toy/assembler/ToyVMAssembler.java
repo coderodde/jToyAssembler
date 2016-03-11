@@ -55,7 +55,16 @@ public class ToyVMAssembler {
     private final List<Byte> machineCode = new ArrayList<>();
     private final Map<Integer, String> mapAddressToLabel = new HashMap<>();
     private final Map<String, Integer> mapLabelToAddress = new HashMap<>();
+    private final Map<String, InstructionAssembler> mapOpcodeToAssembler = 
+            new HashMap<>();
+    
     private final String fileName;
+    
+    @FunctionalInterface
+    private interface InstructionAssembler {
+        
+        void assemble(String line);
+    }
     
     public ToyVMAssembler(String fileName, List<String> sourceCodeLineList) {
         Objects.requireNonNull(sourceCodeLineList,
@@ -63,6 +72,20 @@ public class ToyVMAssembler {
         Objects.requireNonNull(fileName, "The input file name is null.");
         this.sourceCodeLineList  = sourceCodeLineList;
         this.fileName = fileName;
+        
+        buildOpcodeMap();
+    }
+    
+    private void buildOpcodeMap() {
+        mapOpcodeToAssembler.put("add", (line) -> ::assembleAdd);
+        mapOpcodeToAssembler.put("neg", (line) -> ::assembleNeg);
+        mapOpcodeToAssembler.put("mul", (line) -> ::assembleMul);
+        mapOpcodeToAssembler.put("div", (line) -> ::assembleDiv);
+        mapOpcodeToAssembler.put("mod", (line) -> ::assembleMod);
+        mapOpcodeToAssembler.put("cmp", (line) -> ::assembleCmp);
+        mapOpcodeToAssembler.put("ja",  (line) -> ::assembleJa);
+        mapOpcodeToAssembler.put("je",  (line) -> ::assembleJe);
+        mapOpcodeToAssembler.put("jb",  (line) -> ::assembleJb);
     }
     
     public byte[] assemble() {
@@ -93,19 +116,16 @@ public class ToyVMAssembler {
         }
         
         // Switch to assembing the actual.
-        if (actualLine.startsWith("add")) {
-            assembleAdd(actualLine);
-        } else if (actualLine.startsWith("neg")) {
-            assembleNeg(actualLine);
-        } else if (actualLine.startsWith("mul")) {
-            assembleMul(actualLine);
-        } else if (actualLine.startsWith("div")) {
-            assembleDiv(actualLine);
-        } else if (actualLine.startsWith("mod")) {
-            assembleMod(actualLine);
-        } else if (actualLine.startsWith("cmp")) {
-            assembleCmp(actualLine);
+        InstructionAssembler instructionAssembler = 
+                mapOpcodeToAssembler.get(toTokens(line)[0]);
+        
+        if (instructionAssembler == null) {
+            throw new RuntimeException(
+                    errorHeader() +
+                    "Unknown instruction in line \"" + line + "\".");
         }
+        
+        instructionAssembler.assemble(line);
     }
     
     private void emitRegister(String registerToken) {
@@ -233,6 +253,110 @@ public class ToyVMAssembler {
         machineCode.add(CMP);
         emitRegister(tokens[1]);
         emitRegister(tokens[2]);
+    }
+    
+    private void assembleJa(String line) {
+        String[] tokens = toTokens(line);
+        
+        if (tokens.length != 2) {
+            throw new RuntimeException(
+                    errorHeader() + 
+                    "The 'ja' instruction requires exactly two tokens: " +
+                    "\"ja label\" or \"ja address\"");
+        }
+        
+        machineCode.add(JA);
+        
+        if (isHexInteger(tokens[1])) {
+            emitAddress(hexStringToInteger(tokens[1]));
+        } else if (isInteger(tokens[1])) {
+            emitAdress(toInteger(tokens[1]));
+        } else {
+            mapAddressToLabel.put(machineCode.size(), tokens[1]);
+            emitAddress(0);
+        }
+    }
+    
+    private void assembleJe(String line) {
+        String[] tokens = toTokens(line);
+        
+        if (tokens.length != 2) {
+            throw new RuntimeException(
+                    errorHeader() + 
+                    "The 'je' instruction requires exactly two tokens: " +
+                    "\"je label\" or \"je address\"");
+        }
+        
+        machineCode.add(JE);
+        
+        if (isHexInteger(tokens[1])) {
+            emitAddress(hexStringToInteger(tokens[1]));
+        } else if (isInteger(tokens[1])) {
+            emitAdress(toInteger(tokens[1]));
+        } else {
+            mapAddressToLabel.put(machineCode.size(), tokens[1]);
+            emitAddress(0);
+        }
+    }
+    
+    private void assembleJb(String line) {
+        String[] tokens = toTokens(line);
+        
+        if (tokens.length != 2) {
+            throw new RuntimeException(
+                    errorHeader() + 
+                    "The 'jb' instruction requires exactly two tokens: " +
+                    "\"jb label\" or \"jb address\"");
+        }
+        
+        machineCode.add(JB);
+        
+        if (isHexInteger(tokens[1])) {
+            emitAddress(hexStringToInteger(tokens[1]));
+        } else if (isInteger(tokens[1])) {
+            emitAdress(toInteger(tokens[1]));
+        } else {
+            mapAddressToLabel.put(machineCode.size(), tokens[1]);
+            emitAddress(0);
+        }
+    }
+    
+    private boolean isInteger(String token) {
+        try {
+            Integer.parseInt(token);
+            return true;
+        } catch (NumberFormatException ex) {
+            return false;
+        }
+    }
+    
+    private boolean isHexInteger(String token) {
+        if (token.length() < 3 
+                || (!token.startsWith("0x") || !token.startsWith("0x"))) {
+            return false;
+        }
+        
+        String body = token.substring(2);
+        
+        try {
+            Integer.parseInt(body, 16);
+            return true;
+        } catch (NumberFormatException ex) {
+            return false;
+        }
+    }
+    
+    private int hexStringToInteger(String token) {
+        if (!isHexInteger(token)) {
+            throw new IllegalArgumentException(
+                    "The input token is not a hexadecimal number.");
+        }
+        
+        return Integer.parseInt(token, 16); 
+    }
+    
+    private int toInteger(String token) {
+        return Integer.parseInt(token);
     }
     
     private void checkComment(String comment) {
