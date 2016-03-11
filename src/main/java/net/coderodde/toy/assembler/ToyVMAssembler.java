@@ -1,8 +1,6 @@
 package net.coderodde.toy.assembler;
 
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -95,8 +93,18 @@ public class ToyVMAssembler {
         }
         
         // Switch to assembing the actual.
-        if (actualLine.startsWith("add ")) {
+        if (actualLine.startsWith("add")) {
             assembleAdd(actualLine);
+        } else if (actualLine.startsWith("neg")) {
+            assembleNeg(actualLine);
+        } else if (actualLine.startsWith("mul")) {
+            assembleMul(actualLine);
+        } else if (actualLine.startsWith("div")) {
+            assembleDiv(actualLine);
+        } else if (actualLine.startsWith("mod")) {
+            assembleMod(actualLine);
+        } else if (actualLine.startsWith("cmp")) {
+            assembleCmp(actualLine);
         }
     }
     
@@ -141,17 +149,88 @@ public class ToyVMAssembler {
     private void assembleAdd(String line) {
         String[] tokens = toTokens(line);
         
-        if (tokens.length != 3 && tokens.length != 4) {
+        if (tokens.length != 3) {
             throw new RuntimeException(
-                    "The ADD instruction requires exactly three tokens: " +
+                    errorHeader() +
+                    "The 'add' instruction requires exactly three tokens: " +
                     "\"add regi regj\"");
         }
         
-        if (tokens.length == 4) {
-            checkComment(tokens[3]);
+        machineCode.add(ADD);
+        emitRegister(tokens[1]);
+        emitRegister(tokens[2]);
+    }
+    
+    private void assembleNeg(String line) {
+        String[] tokens = toTokens(line);
+        
+        if (tokens.length != 2) {
+            throw new RuntimeException(
+                    errorHeader() +
+                    "The 'neg' instruction requires exactly two tokens: " +
+                    "\"neg regi\"");
         }
         
-        machineCode.add(ADD);
+        machineCode.add(NEG);
+        emitRegister(tokens[1]);
+    }
+    
+    private void assembleMul(String line) {
+        String[] tokens = toTokens(line);
+        
+        if (tokens.length != 3) {
+            throw new RuntimeException(
+                    errorHeader() +
+                    "The 'mul' instruction requires exactly three tokens: " +
+                    "\"mul regi regj\"");
+        }
+        
+        machineCode.add(MUL);
+        emitRegister(tokens[1]);
+        emitRegister(tokens[2]);
+    }
+    
+    private void assembleDiv(String line) {
+        String[] tokens = toTokens(line);
+        
+        if (tokens.length != 3) {
+            throw new RuntimeException(
+                    errorHeader() +
+                    "The 'div' instruction requires exactly three tokens: " +
+                    "\"div regi regj\"");
+        }
+        
+        machineCode.add(DIV);
+        emitRegister(tokens[1]);
+        emitRegister(tokens[2]);
+    }
+    
+    private void assembleMod(String line) {
+        String[] tokens = toTokens(line);
+        
+        if (tokens.length != 3) {
+            throw new RuntimeException(
+                    errorHeader() +
+                    "The 'mod' instruction requires exactly three tokens: " +
+                    "\"mod regi regj\"");
+        }
+        
+        machineCode.add(MOD);
+        emitRegister(tokens[1]);
+        emitRegister(tokens[2]);
+    }
+    
+    private void assembleCmp(String line) {
+        String[] tokens = toTokens(line);
+        
+        if (tokens.length != 3) {
+            throw new RuntimeException(
+                    errorHeader() +
+                    "The 'cmp' instruction requires exactly three tokens: " +
+                    "\"cmp regi regj\"");
+        }
+        
+        machineCode.add(CMP);
         emitRegister(tokens[1]);
         emitRegister(tokens[2]);
     }
@@ -196,15 +275,20 @@ public class ToyVMAssembler {
         return code;
     }
     
+    private String errorHeader() {
+        return "ERROR in file \"" + fileName + "\": ";
+    }
+    
     public static void main(String[] args) throws FileNotFoundException {
-        String line1 = "add reg1 reg2";
-        String line2 = "label: add reg3 reg4";
+        String line1 = "add reg1 reg2 // yeah";
+        String line2 = "label: add reg3 reg4// commnet // yeah";
         
         List<String> list = new ArrayList<>();
         list.add(line1);
         list.add(line2);
         
-        byte[] data = new ToyVMAssembler("file", list).assemble();
+        ToyVMAssembler assembler = new ToyVMAssembler("file", list);
+        byte[] data = assembler.assemble();
         System.out.println("Done.");
     }
 }
