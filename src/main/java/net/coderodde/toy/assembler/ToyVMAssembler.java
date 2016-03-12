@@ -77,15 +77,31 @@ public class ToyVMAssembler {
     }
     
     private void buildOpcodeMap() {
-        mapOpcodeToAssembler.put("add", (line) -> ::assembleAdd);
-        mapOpcodeToAssembler.put("neg", (line) -> ::assembleNeg);
-        mapOpcodeToAssembler.put("mul", (line) -> ::assembleMul);
-        mapOpcodeToAssembler.put("div", (line) -> ::assembleDiv);
-        mapOpcodeToAssembler.put("mod", (line) -> ::assembleMod);
-        mapOpcodeToAssembler.put("cmp", (line) -> ::assembleCmp);
-        mapOpcodeToAssembler.put("ja",  (line) -> ::assembleJa);
-        mapOpcodeToAssembler.put("je",  (line) -> ::assembleJe);
-        mapOpcodeToAssembler.put("jb",  (line) -> ::assembleJb);
+        mapOpcodeToAssembler.put("add",   (line) -> { assembleAdd  (line); });
+        mapOpcodeToAssembler.put("neg",   (line) -> { assembleNeg  (line); });
+        mapOpcodeToAssembler.put("mul",   (line) -> { assembleMul  (line); });
+        mapOpcodeToAssembler.put("div",   (line) -> { assembleDiv  (line); });
+        mapOpcodeToAssembler.put("mod",   (line) -> { assembleMod  (line); });
+        mapOpcodeToAssembler.put("cmp",   (line) -> { assembleCmp  (line); });
+        mapOpcodeToAssembler.put("ja",    (line) -> { assembleJa   (line); });
+        mapOpcodeToAssembler.put("je",    (line) -> { assembleJe   (line); });
+        mapOpcodeToAssembler.put("jb",    (line) -> { assembleJb   (line); });
+        mapOpcodeToAssembler.put("jmp",   (line) -> { assembleJmp  (line); });
+        mapOpcodeToAssembler.put("call",  (line) -> { assembleCall (line); });
+        mapOpcodeToAssembler.put("ret",   (line) -> { assembleRet  (line); });
+        mapOpcodeToAssembler.put("load",  (line) -> { assembleLoad (line); });
+        mapOpcodeToAssembler.put("store", (line) -> { assembleStore(line); });
+        mapOpcodeToAssembler.put("const", (line) -> { assembleConst(line); });
+        mapOpcodeToAssembler.put("halt",  (line) -> { assembleHalt(line); });
+        mapOpcodeToAssembler.put("int",   (line) -> { assembleInt(line); });
+        mapOpcodeToAssembler.put("nop",   (line) -> { assembleNop(line); });
+        mapOpcodeToAssembler.put("push",  (line) -> { assemblePush(line); });
+        mapOpcodeToAssembler.put("pusha", (line) -> { assemblePushAll(line); });
+        mapOpcodeToAssembler.put("pop",   (line) -> { assemblePop(line); });
+        mapOpcodeToAssembler.put("popa",  (line) -> { assemblePopAll(line); });
+        mapOpcodeToAssembler.put("lsp",   (line) -> { assembleLsp(line); });
+        mapOpcodeToAssembler.put("word",  (line) -> { assembleWord(line); });
+        mapOpcodeToAssembler.put("str",   (line) -> { assembleString(line); });
     }
     
     public byte[] assemble() {
@@ -117,7 +133,7 @@ public class ToyVMAssembler {
         
         // Switch to assembing the actual.
         InstructionAssembler instructionAssembler = 
-                mapOpcodeToAssembler.get(toTokens(line)[0]);
+                mapOpcodeToAssembler.get(toTokens(actualLine)[0]);
         
         if (instructionAssembler == null) {
             throw new RuntimeException(
@@ -125,7 +141,7 @@ public class ToyVMAssembler {
                     "Unknown instruction in line \"" + line + "\".");
         }
         
-        instructionAssembler.assemble(line);
+        instructionAssembler.assemble(actualLine);
     }
     
     private void emitRegister(String registerToken) {
@@ -270,7 +286,7 @@ public class ToyVMAssembler {
         if (isHexInteger(tokens[1])) {
             emitAddress(hexStringToInteger(tokens[1]));
         } else if (isInteger(tokens[1])) {
-            emitAdress(toInteger(tokens[1]));
+            emitAddress(toInteger(tokens[1]));
         } else {
             mapAddressToLabel.put(machineCode.size(), tokens[1]);
             emitAddress(0);
@@ -292,7 +308,7 @@ public class ToyVMAssembler {
         if (isHexInteger(tokens[1])) {
             emitAddress(hexStringToInteger(tokens[1]));
         } else if (isInteger(tokens[1])) {
-            emitAdress(toInteger(tokens[1]));
+            emitAddress(toInteger(tokens[1]));
         } else {
             mapAddressToLabel.put(machineCode.size(), tokens[1]);
             emitAddress(0);
@@ -314,11 +330,119 @@ public class ToyVMAssembler {
         if (isHexInteger(tokens[1])) {
             emitAddress(hexStringToInteger(tokens[1]));
         } else if (isInteger(tokens[1])) {
-            emitAdress(toInteger(tokens[1]));
+            emitAddress(toInteger(tokens[1]));
         } else {
             mapAddressToLabel.put(machineCode.size(), tokens[1]);
             emitAddress(0);
         }
+    }
+    
+    private void assembleJmp(String line) {
+        String[] tokens = toTokens(line);
+        
+        if (tokens.length != 2) {
+            throw new RuntimeException(
+                    errorHeader() +
+                    "The 'jmp' instructoin requires exactly two tokens: " +
+                    "\"jmp label\" or \"jmp address\"");
+        }
+        
+        machineCode.add(JMP);
+        
+        if (isHexInteger(tokens[1])) {
+            emitAddress(hexStringToInteger(tokens[1]));
+        } else if (isInteger(tokens[1])) {
+            emitAddress(toInteger(tokens[1]));
+        } else {
+            mapAddressToLabel.put(machineCode.size(), tokens[1]);
+            emitAddress(0);
+        }
+    }
+    
+    private void assembleCall(String line) {
+        String[] tokens = toTokens(line);
+        
+        if (tokens.length != 2) {
+            throw new RuntimeException(
+                    errorHeader() + 
+                    "The 'call' instruction requires exactly two tokens: " +
+                    "\"call label\" or \"call address\"");
+        }
+        
+        machineCode.add(CALL);
+        
+        if (isHexInteger(tokens[1])) {
+            emitAddress(hexStringToInteger(tokens[1]));
+        } else if (isInteger(tokens[1])) {
+            emitAddress(toInteger(tokens[1]));
+        } else {
+            mapAddressToLabel.put(machineCode.size(), tokens[1]);
+            emitAddress(0);
+        }
+    }
+    
+    private void assembleRet(String line) {
+        String[] tokens = toTokens(line);
+        
+        if (tokens.length != 1) {
+            throw new RuntimeException(
+                    errorHeader() + 
+                    "The 'ret' instruction must not have any arguemnts.");
+        }
+        
+        machineCode.add(RET);
+    }
+    
+    private void assembleLoad(String line) {
+        
+    }
+    
+    private void assembleStore(String line) {
+        
+    }
+    
+    private void assembleConst(String line) {
+        
+    }
+    
+    private void assembleHalt(String line) {
+        
+    }
+    
+    private void assembleInt(String line) {
+        
+    }
+    
+    private void assembleNop(String line) {
+        
+    }
+    
+    private void assemblePush(String line) {
+        
+    }
+    
+    private void assemblePushAll(String line) {
+        
+    }
+    
+    private void assemblePop(String line) {
+        
+    }
+    
+    private void assemblePopAll(String line) {
+        
+    }
+    
+    private void assembleLsp(String line) {
+        
+    }
+    
+    private void assembleWord(String line) {
+        
+    }
+    
+    private void assembleString(String line) {
+        
     }
     
     private boolean isInteger(String token) {
@@ -357,13 +481,6 @@ public class ToyVMAssembler {
     
     private int toInteger(String token) {
         return Integer.parseInt(token);
-    }
-    
-    private void checkComment(String comment) {
-        if (comment.length() < 2 || !comment.startsWith("//")) {
-            throw new RuntimeException(
-                    "Bad comment token: \"" + comment + "\"");
-        }
     }
     
     private String[] toTokens(String line) {
@@ -412,7 +529,7 @@ public class ToyVMAssembler {
         list.add(line2);
         
         ToyVMAssembler assembler = new ToyVMAssembler("file", list);
-        byte[] data = assembler.assemble();
+        byte[] data = assembler.assemble(); 
         System.out.println("Done.");
     }
 }
