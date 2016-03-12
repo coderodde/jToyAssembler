@@ -77,31 +77,31 @@ public class ToyVMAssembler {
     }
     
     private void buildOpcodeMap() {
-        mapOpcodeToAssembler.put("add",   (line) -> { assembleAdd  (line); });
-        mapOpcodeToAssembler.put("neg",   (line) -> { assembleNeg  (line); });
-        mapOpcodeToAssembler.put("mul",   (line) -> { assembleMul  (line); });
-        mapOpcodeToAssembler.put("div",   (line) -> { assembleDiv  (line); });
-        mapOpcodeToAssembler.put("mod",   (line) -> { assembleMod  (line); });
-        mapOpcodeToAssembler.put("cmp",   (line) -> { assembleCmp  (line); });
-        mapOpcodeToAssembler.put("ja",    (line) -> { assembleJa   (line); });
-        mapOpcodeToAssembler.put("je",    (line) -> { assembleJe   (line); });
-        mapOpcodeToAssembler.put("jb",    (line) -> { assembleJb   (line); });
-        mapOpcodeToAssembler.put("jmp",   (line) -> { assembleJmp  (line); });
-        mapOpcodeToAssembler.put("call",  (line) -> { assembleCall (line); });
-        mapOpcodeToAssembler.put("ret",   (line) -> { assembleRet  (line); });
-        mapOpcodeToAssembler.put("load",  (line) -> { assembleLoad (line); });
-        mapOpcodeToAssembler.put("store", (line) -> { assembleStore(line); });
-        mapOpcodeToAssembler.put("const", (line) -> { assembleConst(line); });
-        mapOpcodeToAssembler.put("halt",  (line) -> { assembleHalt(line); });
-        mapOpcodeToAssembler.put("int",   (line) -> { assembleInt(line); });
-        mapOpcodeToAssembler.put("nop",   (line) -> { assembleNop(line); });
-        mapOpcodeToAssembler.put("push",  (line) -> { assemblePush(line); });
-        mapOpcodeToAssembler.put("pusha", (line) -> { assemblePushAll(line); });
-        mapOpcodeToAssembler.put("pop",   (line) -> { assemblePop(line); });
-        mapOpcodeToAssembler.put("popa",  (line) -> { assemblePopAll(line); });
-        mapOpcodeToAssembler.put("lsp",   (line) -> { assembleLsp(line); });
-        mapOpcodeToAssembler.put("word",  (line) -> { assembleWord(line); });
-        mapOpcodeToAssembler.put("str",   (line) -> { assembleString(line); });
+        mapOpcodeToAssembler.put("add",   this::assembleAdd    );
+        mapOpcodeToAssembler.put("neg",   this::assembleNeg    );
+        mapOpcodeToAssembler.put("mul",   this::assembleMul    );
+        mapOpcodeToAssembler.put("div",   this::assembleDiv    );
+        mapOpcodeToAssembler.put("mod",   this::assembleMod    );
+        mapOpcodeToAssembler.put("cmp",   this::assembleCmp    );
+        mapOpcodeToAssembler.put("ja",    this::assembleJa     );
+        mapOpcodeToAssembler.put("je",    this::assembleJe     );
+        mapOpcodeToAssembler.put("jb",    this::assembleJb     );
+        mapOpcodeToAssembler.put("jmp",   this::assembleJmp    );
+        mapOpcodeToAssembler.put("call",  this::assembleCall   );
+        mapOpcodeToAssembler.put("ret",   this::assembleRet    );
+        mapOpcodeToAssembler.put("load",  this::assembleLoad   );
+        mapOpcodeToAssembler.put("store", this::assembleStore  );
+        mapOpcodeToAssembler.put("const", this::assembleConst  );
+        mapOpcodeToAssembler.put("halt",  this::assembleHalt   );
+        mapOpcodeToAssembler.put("int",   this::assembleInt    );
+        mapOpcodeToAssembler.put("nop",   this::assembleNop    );
+        mapOpcodeToAssembler.put("push",  this::assemblePush   );
+        mapOpcodeToAssembler.put("pusha", this::assemblePushAll);
+        mapOpcodeToAssembler.put("pop",   this::assemblePop    );
+        mapOpcodeToAssembler.put("popa",  this::assemblePopAll );
+        mapOpcodeToAssembler.put("lsp",   this::assembleLsp    );
+        mapOpcodeToAssembler.put("word",  this::assembleWord   );
+        mapOpcodeToAssembler.put("str",   this::assembleString );
     }
     
     public byte[] assemble() {
