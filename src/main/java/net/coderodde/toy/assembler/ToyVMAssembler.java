@@ -64,6 +64,7 @@ public class ToyVMAssembler {
     
     private final String fileName;
     private int lineNumber = 1;
+    private final List<String> pendingLabels = new ArrayList<>();
     
     @FunctionalInterface
     private interface InstructionAssembler {
@@ -74,6 +75,7 @@ public class ToyVMAssembler {
         Objects.requireNonNull(sourceCodeLineList,
                                "The input source code line list is null.");
         Objects.requireNonNull(fileName, "The input file name is null.");
+        
         this.sourceCodeLineList  = sourceCodeLineList;
         this.fileName = fileName;
         
@@ -124,7 +126,7 @@ public class ToyVMAssembler {
             String label = entry.getValue();
             
             if (!mapLabelToAddress.containsKey(label)) {
-                throw new RuntimeException(
+                throw new AssemblyException(
                         "Label \"" + label + "\" is not defined.");
             }
             
@@ -143,21 +145,30 @@ public class ToyVMAssembler {
         if (parts.length == 1) {
             actualLine = parts[0];
         } else {
-            mapLabelToAddress.put(parts[0], machineCode.size());
-            actualLine = parts[1];
+            pendingLabels.add(parts[0]);
+            
+            if (!parts[1].isEmpty()) {
+                for (String label : pendingLabels) {
+                    mapLabelToAddress.put(label, machineCode.size());
+                }
+                
+                pendingLabels.clear();
+                actualLine = parts[1];
+            }
+            
+            if (parts[1].isEmpty()) {
+                return;
+            } else {
+                actualLine = parts[1];
+            }
         }
         
-        if (actualLine.isEmpty()) {
-            // The line contains only label.
-            return;
-        }
-        
-        // Switch to assembing the actual.
+        // Switch to assembing the actual instruction.
         InstructionAssembler instructionAssembler = 
                 mapOpcodeToAssembler.get(toTokens(actualLine)[0]);
         
         if (instructionAssembler == null) {
-            throw new RuntimeException(
+            throw new AssemblyException(
                     errorHeader() +
                     "Unknown instruction in line \"" + line + "\".");
         }
@@ -595,6 +606,12 @@ public class ToyVMAssembler {
     }
     
     private void assembleWord(String line) {
+        if (!pendingLabels.isEmpty()) {
+            throw new AssemblyException(
+                    errorHeader() +
+                    "The word declaration expression must not have labels.");
+        }
+        
         String[] tokens = toTokens(line);
         
         if (tokens.length != 3) {
@@ -620,6 +637,12 @@ public class ToyVMAssembler {
     }
     
     private void assembleString(String line) {
+        if (!pendingLabels.isEmpty()) {
+            throw new AssemblyException(
+                    errorHeader() + 
+                    "The string declaration expression must not have labels.");
+        }
+        
         int firstQuoteIndex = line.indexOf("\"");
         
         if (firstQuoteIndex == -1) {
@@ -630,6 +653,13 @@ public class ToyVMAssembler {
         }
         
         int lastQuoteIndex  = line.lastIndexOf("\"");
+        
+        if (firstQuoteIndex == lastQuoteIndex) {
+            throw new AssemblyException(
+                    errorHeader() +
+                    "The string declaration has only one double quote: " +
+                    "requires exactly two.");
+        }
         
         String str = line.substring(firstQuoteIndex + 1, lastQuoteIndex);
         String[] tokens = toTokens(line);

@@ -2,6 +2,7 @@ package net.coderodde.toy.assembler;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,12 +26,13 @@ public class App {
                 byte[] machineCode = new ToyVMAssembler(file.getAbsolutePath(),
                                                         sourceCode).assemble();
                 String outputFileName = computeOutputFileName(file.getName());
+                FileUtilities.writeFile(new File(outputFileName), machineCode);
             } catch (FileNotFoundException ex) {
                 System.err.println(
                         "ERROR: File \"" + file.getAbsolutePath() + "\" " +
                         "is not found.");
-            } catch (AssemblyException ex) {
-                System.out.println("ERROR: " + ex.getMessage());
+            } catch (AssemblyException | IOException ex) {
+                System.err.println("ERROR: " + ex.getMessage());
             }
         }
     }
