@@ -49,6 +49,9 @@ public class ToyVMAssembler {
     private static final byte POP_ALL  = 0x53;
     private static final byte LSP      = 0x54;
     
+    /**
+     * This string specifies the token starting a one-line comment.
+     */
     private static final String COMMENT_START_TOKEN = "//";
     
     private final List<String> sourceCodeLineList;
@@ -116,6 +119,8 @@ public class ToyVMAssembler {
             lineNumber++;
         }
         
+        resolveWords();
+        resolveStrings();
         resolveLabels();
         return convertMachineCodeToByteArray();
     }
@@ -132,6 +137,22 @@ public class ToyVMAssembler {
             
             Integer address = mapLabelToAddress.get(label);
             setAddress(entry.getKey(), address);
+        }
+    }
+    
+    private void resolveWords() {
+        for (Map.Entry<String, Integer> entry : 
+                mapWordNameToWordValue.entrySet()) {
+            mapLabelToAddress.put(entry.getKey(), machineCode.size());
+            emitData(entry.getValue());
+        }
+    }
+    
+    private void resolveStrings() {
+        for (Map.Entry<String, String> entry :
+                mapStringNameToStringValue.entrySet()) {
+            mapLabelToAddress.put(entry.getKey(), machineCode.size());
+            emitString(entry.getValue());
         }
     }
     
@@ -205,6 +226,20 @@ public class ToyVMAssembler {
         machineCode.add((byte)((address >>>= 8) & 0xff));
         machineCode.add((byte)((address >>>= 8) & 0xff));
         machineCode.add((byte)((address >>>= 8) & 0xff));
+    }
+    
+    private void emitData(int data) {
+        emitAddress(data);
+    }
+    
+    private void emitString(String string) {
+        for (char c : string.toCharArray()) {
+            // We support only ANSI.
+            machineCode.add((byte) c);
+        }
+        
+        // Zero-terminate the string.
+        machineCode.add((byte) 0);
     }
     
     private void setAddress(int index, int address) {
