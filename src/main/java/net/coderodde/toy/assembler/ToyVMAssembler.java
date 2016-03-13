@@ -59,10 +59,10 @@ public class ToyVMAssembler {
             new HashMap<>();
     
     private final String fileName;
+    private int lineNumber = 1;
     
     @FunctionalInterface
     private interface InstructionAssembler {
-        
         void assemble(String line);
     }
     
@@ -107,9 +107,26 @@ public class ToyVMAssembler {
     public byte[] assemble() {
         for (String sourceCodeLine : sourceCodeLineList) {
             assembleSourceCodeLine(sourceCodeLine);
+            lineNumber++;
         }
         
+        resolveLabels();
         return convertMachineCodeToByteArray();
+    }
+    
+    // Resolves all symbolical references (labels).
+    private void resolveLabels() {
+        for (Map.Entry<Integer, String> entry : mapAddressToLabel.entrySet()) {
+            String label = entry.getValue();
+            
+            if (!mapLabelToAddress.containsKey(label)) {
+                throw new RuntimeException(
+                        "Label \"" + label + "\" is not defined.");
+            }
+            
+            Integer address = mapLabelToAddress.get(label);
+            setAddress(entry.getKey(), address);
+        }
     }
     
     private void assembleSourceCodeLine(String line) {
@@ -387,54 +404,190 @@ public class ToyVMAssembler {
         if (tokens.length != 1) {
             throw new RuntimeException(
                     errorHeader() + 
-                    "The 'ret' instruction must not have any arguemnts.");
+                    "The 'ret' instruction must not have any arguments.");
         }
         
         machineCode.add(RET);
     }
     
     private void assembleLoad(String line) {
+        String[] tokens = toTokens(line);
         
+        if (tokens.length != 3) {
+            throw new RuntimeException(
+                    errorHeader() +
+                    "The 'load' instruction requires exactly three tokens: " +
+                    "\"load regi address\" or \"load regi label\"");
+        }
+        
+        machineCode.add(LOAD);
+        emitRegister(tokens[1]);
+        
+        if (isHexInteger(tokens[2])) {
+            emitAddress(hexStringToInteger(tokens[2]));
+        } else if (isInteger(tokens[2])) {
+            emitAddress(toInteger(tokens[2]));
+        } else {
+            mapAddressToLabel.put(machineCode.size(), tokens[2]);
+            emitAddress(0);
+        }
     }
     
     private void assembleStore(String line) {
+        String[] tokens = toTokens(line);
         
+        if (tokens.length != 3) {
+            throw new RuntimeException(
+                    errorHeader() +
+                    "The 'store' instruction requires exactly three tokens: " +
+                    "\"store regi address\" or \"store regi label\"");
+        }
+        
+        machineCode.add(STORE);
+        emitRegister(tokens[1]);
+        
+        if (isHexInteger(tokens[2])) {
+            emitAddress(hexStringToInteger(tokens[2]));
+        } else if (isInteger(tokens[2])) {
+            emitAddress(toInteger(tokens[2]));
+        } else {
+            mapAddressToLabel.put(machineCode.size(), tokens[2]);
+            emitAddress(0);
+        }
     }
     
     private void assembleConst(String line) {
+        String[] tokens = toTokens(line);
         
+        if (tokens.length != 3) {
+            throw new RuntimeException(
+                    errorHeader() +
+                    "The 'const' instruction requires exactly three tokens: " +
+                    "\"cosnt regi constant\"");
+        }
+        
+        machineCode.add(CONST);
+        emitRegister(tokens[1]);
+        
+        if (isHexInteger(tokens[2])) {
+            emitAddress(hexStringToInteger(tokens[2]));
+        } else if (isInteger(tokens[2])) {
+            emitAddress(toInteger(tokens[2]));
+        } else {
+            mapAddressToLabel.put(machineCode.size(), tokens[2]);
+            emitAddress(0);
+        }
     }
     
     private void assembleHalt(String line) {
+        String[] tokens = toTokens(line);
         
+        if (tokens.length != 1) {
+            throw new RuntimeException(
+                    errorHeader() +
+                    "The 'halt' instruction must not have any arguments.");
+        }
+        
+        machineCode.add(HALT);
     }
     
     private void assembleInt(String line) {
+        String[] tokens = toTokens(line);
         
+        if (tokens.length != 2) {
+            throw new RuntimeException(
+                    errorHeader() +
+                    "The 'int' instruction requires exactly two tokens: " +
+                    "\"int interrupt_number\"");
+        }
+        
+        machineCode.add(INT);
+        
+        if (isHexInteger(tokens[1])) {
+            machineCode.add((byte) hexStringToInteger(tokens[1]));
+        } else if (isInteger(tokens[1])) {
+            machineCode.add((byte) toInteger(tokens[1]));
+        } else {
+            throw new RuntimeException(
+                    "The interrupt number is not a valid decimal or " +
+                    "hexadecimal integer: \"" + tokens[1] + "\".");
+        }
     }
     
     private void assembleNop(String line) {
+        String[] tokens = toTokens(line);
         
+        if (tokens.length != 1) {
+            throw new RuntimeException(
+                    errorHeader() + 
+                    "The 'nop' instruction must not have arguments.");
+        }
+        
+        machineCode.add(NOP);
     }
     
     private void assemblePush(String line) {
+        String[] tokens = toTokens(line);
         
+        if (tokens.length != 2) {
+            throw new RuntimeException(
+                    errorHeader() +
+                    "The 'push' instruction requires exactly two tokens: " + 
+                    "\"push regi\"");
+        }
+        
+        machineCode.add(PUSH);
+        emitRegister(tokens[1]);
     }
     
     private void assemblePushAll(String line) {
+        String[] tokens = toTokens(line);
         
+        if (tokens.length != 1) {
+            throw new RuntimeException(
+                    errorHeader() +
+                    "The 'pusha' instruction must not have arguments.");
+        }
+        
+        machineCode.add(PUSH_ALL);
     }
     
     private void assemblePop(String line) {
+        String[] tokens = toTokens(line);
         
+        if (tokens.length != 2) {
+            throw new RuntimeException(
+                    errorHeader() +
+                    "The 'pop' instruction requires exactly two tokens: " + 
+                    "\"pop regi\"");
+        }
+        
+        machineCode.add(POP);
+        emitRegister(tokens[1]);
     }
     
     private void assemblePopAll(String line) {
+        String[] tokens = toTokens(line);
         
+        if (tokens.length != 1) {
+            throw new RuntimeException(
+                    errorHeader() +
+                    "The 'popa' instruction must not have arguments.");
+        }
+        
+        machineCode.add(POP_ALL);
     }
     
     private void assembleLsp(String line) {
+        String[] tokens = toTokens(line);
         
+        if (tokens.length != 1) {
+            throw new RuntimeException(
+                    errorHeader() +
+                    "The 'lsp' instruction must not have arguments.");
+        }
+        
+        machineCode.add(LSP);
     }
     
     private void assembleWord(String line) {
@@ -517,7 +670,8 @@ public class ToyVMAssembler {
     }
     
     private String errorHeader() {
-        return "ERROR in file \"" + fileName + "\": ";
+        return "ERROR in file \"" + fileName + 
+               "\" at line " + lineNumber + ": ";
     }
     
     public static void main(String[] args) throws FileNotFoundException {
