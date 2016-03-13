@@ -55,8 +55,12 @@ public class ToyVMAssembler {
     private final List<Byte> machineCode = new ArrayList<>();
     private final Map<Integer, String> mapAddressToLabel = new HashMap<>();
     private final Map<String, Integer> mapLabelToAddress = new HashMap<>();
-    private final Map<String, InstructionAssembler> mapOpcodeToAssembler = 
-            new HashMap<>();
+    private final Map<String, InstructionAssembler> mapOpcodeToAssembler 
+            = new HashMap<>();
+    
+    private final Map<String, Integer> mapWordNameToWordValue = new HashMap<>();
+    private final Map<String, String> mapStringNameToStringValue 
+            = new HashMap<>();
     
     private final String fileName;
     private int lineNumber = 1;
@@ -203,7 +207,7 @@ public class ToyVMAssembler {
         String[] tokens = toTokens(line);
         
         if (tokens.length != 3) {
-            throw new RuntimeException(
+            throw new AssemblyException(
                     errorHeader() +
                     "The 'add' instruction requires exactly three tokens: " +
                     "\"add regi regj\"");
@@ -218,7 +222,7 @@ public class ToyVMAssembler {
         String[] tokens = toTokens(line);
         
         if (tokens.length != 2) {
-            throw new RuntimeException(
+            throw new AssemblyException(
                     errorHeader() +
                     "The 'neg' instruction requires exactly two tokens: " +
                     "\"neg regi\"");
@@ -232,7 +236,7 @@ public class ToyVMAssembler {
         String[] tokens = toTokens(line);
         
         if (tokens.length != 3) {
-            throw new RuntimeException(
+            throw new AssemblyException(
                     errorHeader() +
                     "The 'mul' instruction requires exactly three tokens: " +
                     "\"mul regi regj\"");
@@ -247,7 +251,7 @@ public class ToyVMAssembler {
         String[] tokens = toTokens(line);
         
         if (tokens.length != 3) {
-            throw new RuntimeException(
+            throw new AssemblyException(
                     errorHeader() +
                     "The 'div' instruction requires exactly three tokens: " +
                     "\"div regi regj\"");
@@ -262,7 +266,7 @@ public class ToyVMAssembler {
         String[] tokens = toTokens(line);
         
         if (tokens.length != 3) {
-            throw new RuntimeException(
+            throw new AssemblyException(
                     errorHeader() +
                     "The 'mod' instruction requires exactly three tokens: " +
                     "\"mod regi regj\"");
@@ -277,7 +281,7 @@ public class ToyVMAssembler {
         String[] tokens = toTokens(line);
         
         if (tokens.length != 3) {
-            throw new RuntimeException(
+            throw new AssemblyException(
                     errorHeader() +
                     "The 'cmp' instruction requires exactly three tokens: " +
                     "\"cmp regi regj\"");
@@ -292,7 +296,7 @@ public class ToyVMAssembler {
         String[] tokens = toTokens(line);
         
         if (tokens.length != 2) {
-            throw new RuntimeException(
+            throw new AssemblyException(
                     errorHeader() + 
                     "The 'ja' instruction requires exactly two tokens: " +
                     "\"ja label\" or \"ja address\"");
@@ -314,7 +318,7 @@ public class ToyVMAssembler {
         String[] tokens = toTokens(line);
         
         if (tokens.length != 2) {
-            throw new RuntimeException(
+            throw new AssemblyException(
                     errorHeader() + 
                     "The 'je' instruction requires exactly two tokens: " +
                     "\"je label\" or \"je address\"");
@@ -336,7 +340,7 @@ public class ToyVMAssembler {
         String[] tokens = toTokens(line);
         
         if (tokens.length != 2) {
-            throw new RuntimeException(
+            throw new AssemblyException(
                     errorHeader() + 
                     "The 'jb' instruction requires exactly two tokens: " +
                     "\"jb label\" or \"jb address\"");
@@ -358,7 +362,7 @@ public class ToyVMAssembler {
         String[] tokens = toTokens(line);
         
         if (tokens.length != 2) {
-            throw new RuntimeException(
+            throw new AssemblyException(
                     errorHeader() +
                     "The 'jmp' instructoin requires exactly two tokens: " +
                     "\"jmp label\" or \"jmp address\"");
@@ -380,7 +384,7 @@ public class ToyVMAssembler {
         String[] tokens = toTokens(line);
         
         if (tokens.length != 2) {
-            throw new RuntimeException(
+            throw new AssemblyException(
                     errorHeader() + 
                     "The 'call' instruction requires exactly two tokens: " +
                     "\"call label\" or \"call address\"");
@@ -402,7 +406,7 @@ public class ToyVMAssembler {
         String[] tokens = toTokens(line);
         
         if (tokens.length != 1) {
-            throw new RuntimeException(
+            throw new AssemblyException(
                     errorHeader() + 
                     "The 'ret' instruction must not have any arguments.");
         }
@@ -414,7 +418,7 @@ public class ToyVMAssembler {
         String[] tokens = toTokens(line);
         
         if (tokens.length != 3) {
-            throw new RuntimeException(
+            throw new AssemblyException(
                     errorHeader() +
                     "The 'load' instruction requires exactly three tokens: " +
                     "\"load regi address\" or \"load regi label\"");
@@ -437,7 +441,7 @@ public class ToyVMAssembler {
         String[] tokens = toTokens(line);
         
         if (tokens.length != 3) {
-            throw new RuntimeException(
+            throw new AssemblyException(
                     errorHeader() +
                     "The 'store' instruction requires exactly three tokens: " +
                     "\"store regi address\" or \"store regi label\"");
@@ -460,7 +464,7 @@ public class ToyVMAssembler {
         String[] tokens = toTokens(line);
         
         if (tokens.length != 3) {
-            throw new RuntimeException(
+            throw new AssemblyException(
                     errorHeader() +
                     "The 'const' instruction requires exactly three tokens: " +
                     "\"cosnt regi constant\"");
@@ -483,7 +487,7 @@ public class ToyVMAssembler {
         String[] tokens = toTokens(line);
         
         if (tokens.length != 1) {
-            throw new RuntimeException(
+            throw new AssemblyException(
                     errorHeader() +
                     "The 'halt' instruction must not have any arguments.");
         }
@@ -495,7 +499,7 @@ public class ToyVMAssembler {
         String[] tokens = toTokens(line);
         
         if (tokens.length != 2) {
-            throw new RuntimeException(
+            throw new AssemblyException(
                     errorHeader() +
                     "The 'int' instruction requires exactly two tokens: " +
                     "\"int interrupt_number\"");
@@ -508,7 +512,7 @@ public class ToyVMAssembler {
         } else if (isInteger(tokens[1])) {
             machineCode.add((byte) toInteger(tokens[1]));
         } else {
-            throw new RuntimeException(
+            throw new AssemblyException(
                     "The interrupt number is not a valid decimal or " +
                     "hexadecimal integer: \"" + tokens[1] + "\".");
         }
@@ -518,7 +522,7 @@ public class ToyVMAssembler {
         String[] tokens = toTokens(line);
         
         if (tokens.length != 1) {
-            throw new RuntimeException(
+            throw new AssemblyException(
                     errorHeader() + 
                     "The 'nop' instruction must not have arguments.");
         }
@@ -530,7 +534,7 @@ public class ToyVMAssembler {
         String[] tokens = toTokens(line);
         
         if (tokens.length != 2) {
-            throw new RuntimeException(
+            throw new AssemblyException(
                     errorHeader() +
                     "The 'push' instruction requires exactly two tokens: " + 
                     "\"push regi\"");
@@ -544,7 +548,7 @@ public class ToyVMAssembler {
         String[] tokens = toTokens(line);
         
         if (tokens.length != 1) {
-            throw new RuntimeException(
+            throw new AssemblyException(
                     errorHeader() +
                     "The 'pusha' instruction must not have arguments.");
         }
@@ -556,7 +560,7 @@ public class ToyVMAssembler {
         String[] tokens = toTokens(line);
         
         if (tokens.length != 2) {
-            throw new RuntimeException(
+            throw new AssemblyException(
                     errorHeader() +
                     "The 'pop' instruction requires exactly two tokens: " + 
                     "\"pop regi\"");
@@ -570,7 +574,7 @@ public class ToyVMAssembler {
         String[] tokens = toTokens(line);
         
         if (tokens.length != 1) {
-            throw new RuntimeException(
+            throw new AssemblyException(
                     errorHeader() +
                     "The 'popa' instruction must not have arguments.");
         }
@@ -582,7 +586,7 @@ public class ToyVMAssembler {
         String[] tokens = toTokens(line);
         
         if (tokens.length != 1) {
-            throw new RuntimeException(
+            throw new AssemblyException(
                     errorHeader() +
                     "The 'lsp' instruction must not have arguments.");
         }
@@ -591,11 +595,53 @@ public class ToyVMAssembler {
     }
     
     private void assembleWord(String line) {
+        String[] tokens = toTokens(line);
         
+        if (tokens.length != 3) {
+            throw new AssemblyException(
+                    errorHeader() + 
+                    "The 'word' instruction requireis exactly three tokens: " +
+                    "\"word name value\"");
+        }
+        
+        int datum;
+        
+        if (isHexInteger(tokens[2])) {
+            datum = hexStringToInteger(tokens[2]);
+        } else if (isInteger(tokens[2])) {
+            datum = toInteger(tokens[2]);
+        } else {
+            throw new AssemblyException(
+                    "Cannot parse \"" + tokens[2] + "\" as a decimal or " + 
+                    "hexadecimal integer.");
+        }
+        
+        mapWordNameToWordValue.put(tokens[1], datum);
     }
     
     private void assembleString(String line) {
+        int firstQuoteIndex = line.indexOf("\"");
         
+        if (firstQuoteIndex == -1) {
+            throw new AssemblyException(
+                    errorHeader() +
+                    "The string must be enclosed in quotation marks: " +
+                    "str name \"string content\"");
+        }
+        
+        int lastQuoteIndex  = line.lastIndexOf("\"");
+        
+        String str = line.substring(firstQuoteIndex + 1, lastQuoteIndex);
+        String[] tokens = toTokens(line);
+        
+        if (tokens.length < 3) {
+            throw new AssemblyException(
+                    errorHeader() + 
+                    "The 'str' instruction requireis exactly three tokens: " +
+                    "\"str name value\"");
+        }
+        
+        mapStringNameToStringValue.put(tokens[1], str);
     }
     
     private boolean isInteger(String token) {
@@ -648,7 +694,7 @@ public class ToyVMAssembler {
         }
         
         if (line.indexOf(":", colonIndex + 1) != -1) {
-            throw new RuntimeException(
+            throw new AssemblyException(
                     "Only one label allowed per line. The input line is \"" +
                     line + "\".");
         }

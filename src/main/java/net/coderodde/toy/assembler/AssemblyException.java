@@ -9,4 +9,7 @@ package net.coderodde.toy.assembler;
  */
 public class AssemblyException extends RuntimeException {
     
+    public AssemblyException(String message) {
+        super(message);
+    }
 }
