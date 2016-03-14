@@ -173,6 +173,34 @@ public class ToyVMAssemblerTest {
         assertTrue(Arrays.equals(expected, code));
     }
     
+    @Test
+    public void testStore() {
+        source.add("store reg1 30");
+        source.add("word number 0x12341235");
+        source.add("store reg2 number");
+        source.add("store reg4 my_str");
+        source.add("str my_str \"Hello\"");
+        byte[] code = assembler.assemble();
+        byte[] expected = new byte[]{ STORE, REG1, 30, 0, 0, 0,
+                                      STORE, REG2, 18, 0, 0, 0,
+                                      STORE, REG4, 22, 0, 0, 0,
+                                      0x35, 0x12, 0x34, 0x12,
+                                      0, 0, 0, 0, 0, 0 };
+        writeString("Hello", expected, 22);
+        assertTrue(Arrays.equals(expected, code));
+    }
+    
+    @Test
+    public void testConst() {
+        source.add("const reg1 0x12345678");
+        source.add("const reg4 0x9abcdef0");
+        byte[] code = assembler.assemble();
+        byte[] expected = new byte[]{ 
+            CONST, REG1, 0x78, 0x56, 0x34, 0x12,
+            CONST, REG4, (byte) 0xf0, (byte)0xde, (byte)0xbc, (byte) 0x9a };
+        assertTrue(Arrays.equals(expected, code));
+    }
+    
     private void writeString(String string, byte[] code, int offset) {
         for (char c : string.toCharArray()) {
             code[offset++] = (byte) c;

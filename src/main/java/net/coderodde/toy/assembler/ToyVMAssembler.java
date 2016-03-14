@@ -513,7 +513,7 @@ public class ToyVMAssembler {
                     "\"load regi address\" or \"load regi label\"");
         }
         
-        machineCode.add(LOAD);
+        emitOpcode(LOAD);
         emitRegister(tokens[1]);
         
         if (isHexInteger(tokens[2])) {
@@ -536,7 +536,7 @@ public class ToyVMAssembler {
                     "\"store regi address\" or \"store regi label\"");
         }
         
-        machineCode.add(STORE);
+        emitOpcode(STORE);
         emitRegister(tokens[1]);
         
         if (isHexInteger(tokens[2])) {
@@ -559,16 +559,18 @@ public class ToyVMAssembler {
                     "\"cosnt regi constant\"");
         }
         
-        machineCode.add(CONST);
+        emitOpcode(CONST);
         emitRegister(tokens[1]);
         
         if (isHexInteger(tokens[2])) {
-            emitAddress(hexStringToInteger(tokens[2]));
+            emitData(hexStringToInteger(tokens[2]));
         } else if (isInteger(tokens[2])) {
-            emitAddress(toInteger(tokens[2]));
+            emitData(toInteger(tokens[2]));
         } else {
-            mapAddressToLabel.put(machineCode.size(), tokens[2]);
-            emitAddress(0);
+            throw new AssemblyException(
+                    errorHeader() +
+                    "The second argument of 'const' instruction must be a " + 
+                    "decimal or hexadecimal constant.");
         }
     }
     
@@ -793,10 +795,10 @@ public class ToyVMAssembler {
             return false;
         }
         
-        String body = token.substring(2);
+        String body = token.substring(2).toLowerCase();
         
         try {
-            Integer.parseInt(body, 16);
+            Long.parseLong(body, 16);
             return true;
         } catch (NumberFormatException ex) {
             return false;
@@ -809,7 +811,7 @@ public class ToyVMAssembler {
                     "The input token is not a hexadecimal number.");
         }
         
-        return Integer.parseInt(token.substring(2).toLowerCase(), 16); 
+        return (int) Long.parseLong(token.substring(2).toLowerCase(), 16); 
     }
     
     private int toInteger(String token) {
