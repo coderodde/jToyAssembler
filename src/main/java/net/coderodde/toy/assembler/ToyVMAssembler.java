@@ -568,10 +568,8 @@ public class ToyVMAssembler {
         } else if (isInteger(tokens[2])) {
             emitData(toInteger(tokens[2]));
         } else {
-            throw new AssemblyException(
-                    errorHeader() +
-                    "The second argument of 'const' instruction must be a " + 
-                    "decimal or hexadecimal constant.");
+            mapAddressToName.put(machineCode.size(), tokens[2]);
+            emitAddress(0);
         }
     }
     
@@ -780,6 +778,7 @@ public class ToyVMAssembler {
                     "There is already a word with name \"" + tokens[1] + "\"");
         }
         
+        str = str.replace("\\n", "\n");
         mapStringNameToStringValue.put(tokens[1], str);
     }
     
