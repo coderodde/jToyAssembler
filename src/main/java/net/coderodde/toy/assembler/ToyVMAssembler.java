@@ -61,19 +61,14 @@ public class ToyVMAssembler {
     private final Map<String, InstructionAssembler> mapOpcodeToAssembler 
             = new HashMap<>();
     
-    // OK
     private final Map<String, Integer> mapWordNameToWordValue = new HashMap<>();
-   
-    // OK
     private final Map<String, String> mapStringNameToStringValue 
             = new HashMap<>();
     
     private final Map<String, Integer> mapWordNameToAddress   = new HashMap<>();
-    
     private final Map<String, Integer> mapStringNameToAddress = new HashMap<>();
     
     private final Map<Integer, String> mapAddressToWordName = new HashMap<>();
-    
     private final Map<Integer, String> mapAddressToStringName = new HashMap<>();
     
     private final Map<Integer, String> mapAddressToName = new HashMap<>();
@@ -269,6 +264,10 @@ public class ToyVMAssembler {
     
     private void emitData(int data) {
         emitAddress(data);
+    }
+    
+    private void emitByte(byte b) {
+        machineCode.add(b);
     }
     
     private void emitString(String string) {
@@ -583,7 +582,7 @@ public class ToyVMAssembler {
                     "The 'halt' instruction must not have any arguments.");
         }
         
-        machineCode.add(HALT);
+        emitOpcode(HALT);
     }
     
     private void assembleInt(String line) {
@@ -596,12 +595,12 @@ public class ToyVMAssembler {
                     "\"int interrupt_number\"");
         }
         
-        machineCode.add(INT);
+        emitOpcode(INT);
         
         if (isHexInteger(tokens[1])) {
-            machineCode.add((byte) hexStringToInteger(tokens[1]));
+            emitByte((byte) hexStringToInteger(tokens[1]));
         } else if (isInteger(tokens[1])) {
-            machineCode.add((byte) toInteger(tokens[1]));
+            emitByte((byte) toInteger(tokens[1]));
         } else {
             throw new AssemblyException(
                     "The interrupt number is not a valid decimal or " +
@@ -618,7 +617,7 @@ public class ToyVMAssembler {
                     "The 'nop' instruction must not have arguments.");
         }
         
-        machineCode.add(NOP);
+        emitOpcode(NOP);
     }
     
     private void assemblePush(String line) {
@@ -631,7 +630,7 @@ public class ToyVMAssembler {
                     "\"push regi\"");
         }
         
-        machineCode.add(PUSH);
+        emitOpcode(PUSH);
         emitRegister(tokens[1]);
     }
     
@@ -644,7 +643,7 @@ public class ToyVMAssembler {
                     "The 'pusha' instruction must not have arguments.");
         }
         
-        machineCode.add(PUSH_ALL);
+        emitOpcode(PUSH_ALL);
     }
     
     private void assemblePop(String line) {
@@ -657,7 +656,7 @@ public class ToyVMAssembler {
                     "\"pop regi\"");
         }
         
-        machineCode.add(POP);
+        emitOpcode(POP);
         emitRegister(tokens[1]);
     }
     
@@ -670,19 +669,21 @@ public class ToyVMAssembler {
                     "The 'popa' instruction must not have arguments.");
         }
         
-        machineCode.add(POP_ALL);
+        emitOpcode(POP_ALL);
     }
     
     private void assembleLsp(String line) {
         String[] tokens = toTokens(line);
         
-        if (tokens.length != 1) {
+        if (tokens.length != 2) {
             throw new AssemblyException(
                     errorHeader() +
-                    "The 'lsp' instruction must not have arguments.");
+                    "The 'lsp' instruction must contain exactly two tokens: " +
+                    "\"lsp regi\"");
         }
         
-        machineCode.add(LSP);
+        emitOpcode(LSP);
+        emitRegister(tokens[1]);
     }
     
     private void assembleWord(String line) {

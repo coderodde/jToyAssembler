@@ -201,6 +201,80 @@ public class ToyVMAssemblerTest {
         assertTrue(Arrays.equals(expected, code));
     }
     
+    @Test
+    public void testHalt() {
+        source.add("halt");
+        source.add("halt");
+        byte[] code = assembler.assemble();
+        byte[] expected = new byte[]{ HALT, HALT };
+        assertTrue(Arrays.equals(expected, code));
+    }
+    
+    @Test
+    public void testInt() {
+        source.add("int 1");
+        source.add("int 2");
+        byte[] code = assembler.assemble();
+        byte[] expected = new byte[]{ INT, 1, INT, 2 };
+        assertTrue(Arrays.equals(expected, code));
+    }
+    
+    @Test
+    public void testNop() {
+        source.add("nop");
+        source.add("nop");
+        byte[] code = assembler.assemble();
+        byte[] expected = new byte[]{ NOP, NOP };
+        assertTrue(Arrays.equals(expected, code));
+    }
+    
+    @Test
+    public void testPush() {
+        source.add("push reg2");
+        source.add("push reg1");
+        byte[] code = assembler.assemble();
+        byte[] expected = new byte[]{ PUSH, REG2, PUSH, REG1 };
+        assertTrue(Arrays.equals(expected, code));
+    }
+    
+    @Test
+    public void testPop() {
+        source.add("pop reg2");
+        source.add("pop reg4");
+        byte[] code = assembler.assemble();
+        byte[] expected = new byte[]{ POP, REG2, POP, REG4 };
+        assertTrue(Arrays.equals(expected, code));
+    }
+    
+    @Test
+    public void testPushAll() {
+        source.add("pusha");
+        source.add("pusha");
+        byte[] code = assembler.assemble();
+        byte[] expected = new byte[]{ PUSH_ALL, PUSH_ALL };
+        assertTrue(Arrays.equals(expected, code));
+    }
+    
+    @Test
+    public void testPopAll() {
+        source.add("popa");
+        source.add("popa");
+        byte[] code = assembler.assemble();
+        byte[] expected = new byte[]{ POP_ALL, POP_ALL };
+        assertTrue(Arrays.equals(expected, code));
+    }
+    
+    @Test
+    public void testLsp() {
+        source.add("lsp reg3");
+        source.add("lsp reg2");
+        byte[] code = assembler.assemble();
+        byte[] expected = new byte[]{ LSP, REG3, LSP, REG2 };
+        assertTrue(Arrays.equals(expected, code));
+    }
+    
+    
+    
     private void writeString(String string, byte[] code, int offset) {
         for (char c : string.toCharArray()) {
             code[offset++] = (byte) c;
