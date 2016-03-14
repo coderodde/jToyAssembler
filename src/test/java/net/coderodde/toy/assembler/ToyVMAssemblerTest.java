@@ -273,7 +273,161 @@ public class ToyVMAssemblerTest {
         assertTrue(Arrays.equals(expected, code));
     }
     
+    @Test
+    public void testEmptyCodeOnNoSource() {
+        assertEquals(0, assembler.assemble().length);
+    }
     
+    @Test
+    public void testEmptyLinesAreOmitted() {
+        source.add("");
+        source.add("neg reg1");
+        source.add("");
+        source.add("pusha");
+        source.add("popa");
+        source.add("");
+        byte[] code = assembler.assemble();
+        byte[] expected = new byte[]{ NEG, REG1, PUSH_ALL, POP_ALL };
+        assertTrue(Arrays.equals(expected, code));
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooMuchTokensInAddThrowsAssemblyException() {
+        source.add("add reg1 fun reg3");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooMuchTokensInNegThrowsAssemblyException() {
+        source.add("neg fun nuf");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooMuchTokensInMulThrowsAssemblyException() {
+        source.add("mul one reg2 three");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooMuchTokensInDivThrowsAssemblyException() {
+        source.add("div reg1 reg2 reg3");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooMuchTokensInModThrowsAssemblyException() {
+        source.add("mod r r rrr");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooMuchTokensInCmpThrowsAssemblyException() {
+        source.add("cmp reg1 reg2 reg3");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooMuchTokensInJaThrowsAssemblyException() {
+        source.add("ja 3 reg2");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooMuchTokensInJeThrowsAssemblyException() {
+        source.add("je 4 reg1");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooMuchTokensInJbThrowsAssemblyException() {
+        source.add("jb 5 reg3");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooMuchTokensInJumpThrowsAssemblyException() {
+        source.add("jump 3 reg4");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooMuchTokensInCallThrowsAssemblyException() {
+        source.add("call 3 reg4");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooMuchTokensInRetThrowsAssemblyException() {
+        source.add("ret 3");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooMuchTokensInLoadThrowsAssemblyException() {
+        source.add("load 3 reg1 reg4");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooMuchTokensInStoreThrowsAssemblyException() {
+        source.add("store reg3 reg1 fun");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooMuchTokensInConstThrowsAssemblyException() {
+        source.add("const reg3 3 4");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooMuchTokensInHaltThrowsAssemblyException() {
+        source.add("halt 4");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooMuchTokensInIntThrowsAssemblyException() {
+        source.add("int 1 2");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooMuchTokensInNopThrowsAssemblyException() {
+        source.add("nop reg3");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooMuchTokensInPopThrowsAssemblyException() {
+        source.add("pop reg3 reg1");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooMuchTokensInPopAllThrowsAssemblyException() {
+        source.add("popa all");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooMuchTokensInPushThrowsAssemblyException() {
+        source.add("push reg1 reg3");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooMuchTokensInPushAllThrowsAssemblyException() {
+        source.add("pusha all");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooMuchTokensInLspThrowsAssemblyException() {
+        source.add("lsp reg3 1");
+        assembler.assemble();
+    }
     
     private void writeString(String string, byte[] code, int offset) {
         for (char c : string.toCharArray()) {

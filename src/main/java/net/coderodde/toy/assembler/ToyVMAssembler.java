@@ -217,6 +217,11 @@ public class ToyVMAssembler {
             }
         }
         
+        if (actualLine.trim().isEmpty()) {
+            // Omit empty line.
+            return;
+        }
+        
         // Switch to assembing the actual instruction.
         InstructionAssembler instructionAssembler = 
                 mapOpcodeToAssembler.get(toTokens(actualLine)[0]);
