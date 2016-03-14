@@ -429,6 +429,129 @@ public class ToyVMAssemblerTest {
         assembler.assemble();
     }
     
+    @Test(expected = AssemblyException.class)
+    public void testTooLittleTokensInAddThrowsAssemblyException() {
+        source.add("add reg1");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooLittleTokensInNegThrowsAssemblyException() {
+        source.add("neg");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooLittleTokensInMulThrowsAssemblyException() {
+        source.add("mul reg2");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooLittleTokensInDivThrowsAssemblyException() {
+        source.add("div reg3");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooLittleTokensInModThrowsAssemblyException() {
+        source.add("mod reg4");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooLittleTokensInCmpThrowsAssemblyException() {
+        source.add("cmp reg1");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooLittleTokensInJaThrowsAssemblyException() {
+        source.add("ja");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooLittleTokensInJbThrowsAssemblyException() {
+        source.add("jb");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooLittleTokensInJeThrowsAssemblyException() {
+        source.add("je");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooLittleTokensInCallThrowsAssemblyException() {
+        source.add("call");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooLittleTokensInLoadThrowsAssemblyException() {
+        source.add("load reg1");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooLittleTokensInStoreThrowsAssemblyException() {
+        source.add("store reg2");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooLittleTokensInConstThrowsAssemblyException() {
+        source.add("const reg3");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooLittleTokensInIntThrowsAssemblyException() {
+        source.add("int");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooLittleTokensInPushThrowsAssemblyException() {
+        source.add("push");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooLittleTokensInPopThrowsAssemblyException() {
+        source.add("pop");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testTooLittleTokensInLspThrowsAssemblyException() {
+        source.add("lsp");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testInvalidOpcodeThrowsAssemblyException() {
+        source.add("bad");
+        assembler.assemble();
+    }
+     
+    @Test
+    public void testGoodRegisterDoesNotThrowAssemblyException() {
+        source.add("neg reg1");
+        source.add("neg reg2");
+        source.add("neg reg3");
+        source.add("neg reg4");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class) 
+    public void testBadRegisterThrowsAssemblyException() {
+        source.add("neg reg5");
+        assembler.assemble();
+    }
+    
     private void writeString(String string, byte[] code, int offset) {
         for (char c : string.toCharArray()) {
             code[offset++] = (byte) c;
