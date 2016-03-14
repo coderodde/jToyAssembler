@@ -212,14 +212,12 @@ public class ToyVMAssembler {
             return;
         }
         
-        if (!pendingLabels.isEmpty()) {
-            // Resolve all preceding labels.
-            for (String label : pendingLabels) {
-                mapLabelToAddress.put(label, machineCode.size());
-            }
-            
-            pendingLabels.clear();
-        }
+        // Resolve all preceding labels.
+        pendingLabels.stream().forEach((label) -> {
+            mapLabelToAddress.put(label, machineCode.size());
+        });
+
+        pendingLabels.clear();
         
         // Switch to assembing the actual instruction.
         InstructionAssembler instructionAssembler = 

@@ -579,6 +579,115 @@ public class ToyVMAssemblerTest {
         assertTrue(Arrays.equals(expected, code));
     }
     
+    @Test
+    public void testCommentsAndWhitespace() {
+        source.add("  neg    reg3// Yeah! // whoo");
+        source.add("// add reg1 reg2");
+        source.add("  // common!");
+        source.add(" \t");
+        source.add("int 1");
+        byte[] code = assembler.assemble();
+        byte[] expected = new byte[]{ NEG, REG3,
+                                      INT, 1 };
+        assertTrue(Arrays.equals(expected, code));
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testUndefinedLabelThrowsAssemblyException() {
+        source.add("neg reg1");
+        source.add("neg reg2");
+        source.add("jmp label");
+        source.add("mul reg2 reg3");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testUndefinedWordReferenceThrowsAssemblyException() {
+        source.add("load reg1 absent_word");
+        source.add("nop");
+        assembler.assemble();
+    }
+    
+    @Test(expected = AssemblyException.class)
+    public void testUndefinedStringReferenceThrowsAssemblyException() {
+        source.add("load reg2 absent_string");
+        source.add("nop");
+        assembler.assemble();
+    }
+    
+    @Test
+    public void testSelfLabel() {
+        source.add("label: jmp label");
+        byte[] code = assembler.assemble();
+        byte[] expected = new byte[]{ JMP, 0, 0, 0, 0 };
+        assertTrue(Arrays.equals(expected, code));
+    }
+    
+    @Test
+    public void testForwardLabelReference() {
+        source.add("jmp label");
+        source.add("mul reg3 reg4");
+        source.add("label: nop");
+        byte[] code = assembler.assemble();
+        byte[] expected = new byte[]{ JMP, 8, 0, 0, 0,
+                                      MUL, REG3, REG4,
+                                      NOP };
+        assertTrue(Arrays.equals(expected, code));
+    }
+    
+    @Test
+    public void testBackwardLabelReference() {
+        source.add("nop");
+        source.add("label://");
+        source.add("add reg2 reg1");
+        source.add("jmp label");
+        byte[] code = assembler.assemble();
+        byte[] expected = new byte[]{ NOP, 
+                                      ADD, REG2, REG1,
+                                      JMP, 1, 0, 0, 0 };
+        assertTrue(Arrays.equals(expected, code));
+    }
+    
+    @Test
+    public void testForwardWordReference() {
+        source.add("load reg3 my_word");
+        source.add("word my_word 100");
+        byte[] code = assembler.assemble();
+        byte[] expected = new byte[]{ LOAD, REG3, 6, 0, 0, 0,
+                                      100, 0, 0, 0 };
+        assertTrue(Arrays.equals(expected, code));
+    }
+    
+    @Test
+    public void testBackwardWordReference() {
+        source.add("word my_word 100");
+        source.add("load reg3 my_word");
+        byte[] code = assembler.assemble();
+        byte[] expected = new byte[]{ LOAD, REG3, 6, 0, 0, 0,
+                                      100, 0, 0, 0 };
+        assertTrue(Arrays.equals(expected, code));
+    }
+    
+    @Test
+    public void testForwardStringReference() {
+        source.add("load reg3 my_str");
+        source.add("str my_str \"Funky\"");
+        byte[] code = assembler.assemble();
+        byte[] expected = new byte[]{ LOAD, REG3, 6, 0, 0, 0,
+                                      'F', 'u', 'n', 'k', 'y', 0 };
+        assertTrue(Arrays.equals(expected, code));
+    }
+    
+    @Test
+    public void testBackwardStringReference() {
+        source.add("str my_str \"Funky\"");
+        source.add("load reg3 my_str");
+        byte[] code = assembler.assemble();
+        byte[] expected = new byte[]{ LOAD, REG3, 6, 0, 0, 0,
+                                      'F', 'u', 'n', 'k', 'y', 0};
+        assertTrue(Arrays.equals(expected, code));
+    }
+    
     private void writeString(String string, byte[] code, int offset) {
         for (char c : string.toCharArray()) {
             code[offset++] = (byte) c;
