@@ -8,7 +8,7 @@ import java.util.List;
 
 /**
  * This class implements a command-line utility that compiles ToyVM source code
- * to executable images.
+ * files to executable images.
  * 
  * @author Rodion "rodde" Efremov
  * @version 1.6 (Mar 8, 2016)
@@ -43,7 +43,7 @@ public class App {
         }
         
         int index = inputFileName.lastIndexOf(SOURCE_CODE_FILE_EXTENSION);
-        return inputFileName.substring(index) + BINARY_IMAGE_FILE_EXTENSION;
+        return inputFileName.substring(0, index) + BINARY_IMAGE_FILE_EXTENSION;
     }
     
     private static List<File> getFileList(String[] fileNameArray) {
