@@ -204,22 +204,21 @@ public class ToyVMAssembler {
             actualLine = parts[0];
         } else {
             pendingLabels.add(parts[0]);
-            
-            if (!parts[1].isEmpty()) {
-                for (String label : pendingLabels) {
-                    mapLabelToAddress.put(label, machineCode.size());
-                }
-                
-                pendingLabels.clear();
-                actualLine = parts[1];
-            } else {
-                return;
-            }
+            actualLine = parts[1];
         }
         
         if (actualLine.trim().isEmpty()) {
             // Omit empty line.
             return;
+        }
+        
+        if (!pendingLabels.isEmpty()) {
+            // Resolve all preceding labels.
+            for (String label : pendingLabels) {
+                mapLabelToAddress.put(label, machineCode.size());
+            }
+            
+            pendingLabels.clear();
         }
         
         // Switch to assembing the actual instruction.

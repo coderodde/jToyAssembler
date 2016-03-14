@@ -552,6 +552,33 @@ public class ToyVMAssemblerTest {
         assembler.assemble();
     }
     
+    @Test
+    public void testMultipleLabels() {
+        source.add("nop");           // 1
+        source.add("nop");           // 1 : 2
+        source.add("label1:"); 
+        source.add("label2:");
+        source.add("add reg1 reg2"); // 3 : 5
+        source.add("jmp label1");    // 5 : 10
+        source.add("jmp label2");    // 5 : 15
+        source.add("jmp 0xff00");    // 5 : 20
+        source.add("jmp label3");    // 5 : 25
+        source.add("nop");           // 1 : 26
+        source.add("label3:nop");    // 1 : 27
+        byte[] code = assembler.assemble();
+        byte[] expected = 
+                new byte[]{ NOP, 
+                            NOP,
+                            ADD, REG1, REG2,
+                            JMP, 2, 0, 0, 0,
+                            JMP, 2, 0, 0, 0,
+                            JMP, 0, (byte) 0xff, 0, 0,
+                            JMP, 26, 0, 0, 0,
+                            NOP,
+                            NOP };
+        assertTrue(Arrays.equals(expected, code));
+    }
+    
     private void writeString(String string, byte[] code, int offset) {
         for (char c : string.toCharArray()) {
             code[offset++] = (byte) c;
