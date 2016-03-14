@@ -15,39 +15,39 @@ import java.util.Objects;
  */
 public class ToyVMAssembler {
    
-    private static final byte REG1 = 0x00;
-    private static final byte REG2 = 0x01;
-    private static final byte REG3 = 0x02;
-    private static final byte REG4 = 0x03;
-    
-    private static final byte ADD = 0x01;
-    private static final byte NEG = 0x02;
-    private static final byte MUL = 0x03;
-    private static final byte DIV = 0x04;
-    private static final byte MOD = 0x05;
-    
-    private static final byte CMP = 0x10;
-    private static final byte JA  = 0x11;
-    private static final byte JE  = 0x12;
-    private static final byte JB  = 0x13;
-    private static final byte JMP = 0x14;
-    
-    private static final byte CALL = 0x20;
-    private static final byte RET  = 0x21;
-    
-    private static final byte LOAD  = 0x30;
-    private static final byte STORE = 0x31;
-    private static final byte CONST = 0x32;
-    
-    private static final byte HALT = 0x40;
-    private static final byte INT  = 0x41;
-    private static final byte NOP  = 0x42;
-    
-    private static final byte PUSH     = 0x50;
-    private static final byte PUSH_ALL = 0x51;
-    private static final byte POP      = 0x52;
-    private static final byte POP_ALL  = 0x53;
-    private static final byte LSP      = 0x54;
+    public static final byte REG1 = 0x00;
+    public static final byte REG2 = 0x01;
+    public static final byte REG3 = 0x02;
+    public static final byte REG4 = 0x03;
+
+    public static final byte ADD = 0x01;
+    public static final byte NEG = 0x02;
+    public static final byte MUL = 0x03;
+    public static final byte DIV = 0x04;
+    public static final byte MOD = 0x05;
+ 
+    public static final byte CMP = 0x10;
+    public static final byte JA  = 0x11;
+    public static final byte JE  = 0x12;
+    public static final byte JB  = 0x13;
+    public static final byte JMP = 0x14;
+ 
+    public static final byte CALL = 0x20;
+    public static final byte RET  = 0x21;
+ 
+    public static final byte LOAD  = 0x30;
+    public static final byte STORE = 0x31;
+    public static final byte CONST = 0x32;
+ 
+    public static final byte HALT = 0x40;
+    public static final byte INT  = 0x41;
+    public static final byte NOP  = 0x42;
+ 
+    public static final byte PUSH     = 0x50;
+    public static final byte PUSH_ALL = 0x51;
+    public static final byte POP      = 0x52;
+    public static final byte POP_ALL  = 0x53;
+    public static final byte LSP      = 0x54;
     
     /**
      * Specifies the token starting a one-line comment.
@@ -61,14 +61,19 @@ public class ToyVMAssembler {
     private final Map<String, InstructionAssembler> mapOpcodeToAssembler 
             = new HashMap<>();
     
+    // OK
     private final Map<String, Integer> mapWordNameToWordValue = new HashMap<>();
+   
+    // OK
     private final Map<String, String> mapStringNameToStringValue 
             = new HashMap<>();
     
     private final Map<String, Integer> mapWordNameToAddress   = new HashMap<>();
+    
     private final Map<String, Integer> mapStringNameToAddress = new HashMap<>();
     
     private final Map<Integer, String> mapAddressToWordName = new HashMap<>();
+    
     private final Map<Integer, String> mapAddressToStringName = new HashMap<>();
     
     private final Map<Integer, String> mapAddressToName = new HashMap<>();
@@ -130,6 +135,7 @@ public class ToyVMAssembler {
         resolveWords();
         resolveStrings();
         resolveLabels(); 
+        resolveReferences();
         return convertMachineCodeToByteArray();
     }
     
@@ -173,6 +179,22 @@ public class ToyVMAssembler {
             
             Integer address = mapLabelToAddress.get(label);
             setAddress(entry.getKey(), address);
+        }
+    }
+    
+    private void resolveReferences() {
+        for (Map.Entry<Integer, String> entry : mapAddressToName.entrySet()) {
+            String name = entry.getValue();
+            
+            if (mapStringNameToAddress.containsKey(name)) {
+                setAddress(entry.getKey(), mapStringNameToAddress.get(name));
+            } else if (mapWordNameToAddress.containsKey(name)) {
+                setAddress(entry.getKey(), mapWordNameToAddress.get(name));
+            } else {
+                throw new AssemblyException(
+                        errorHeader() +
+                        "\"" + name + "\" is not declared.");
+            }
         }
     }
     
@@ -717,7 +739,7 @@ public class ToyVMAssembler {
         if (firstQuoteIndex == -1) {
             throw new AssemblyException(
                     errorHeader() +
-                    "The string must be enclosed in quotation marks: " +
+                    "The string must be enclosed in double quotation marks: " +
                     "str name \"string content\"");
         }
         
@@ -736,7 +758,7 @@ public class ToyVMAssembler {
         if (tokens.length < 3) {
             throw new AssemblyException(
                     errorHeader() + 
-                    "The 'str' instruction requireis exactly three tokens: " +
+                    "The 'str' instruction requires exactly three tokens: " +
                     "\"str name value\"");
         }
         
@@ -750,7 +772,7 @@ public class ToyVMAssembler {
         if (mapWordNameToWordValue.containsKey(tokens[1])) {
             throw new AssemblyException(
                     errorHeader() +
-                    "There is alread a word with name \"" + tokens[1] + "\"");
+                    "There is already a word with name \"" + tokens[1] + "\"");
         }
         
         mapStringNameToStringValue.put(tokens[1], str);
