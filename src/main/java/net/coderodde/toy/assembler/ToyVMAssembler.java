@@ -50,7 +50,7 @@ public class ToyVMAssembler {
     private static final byte LSP      = 0x54;
     
     /**
-     * This string specifies the token starting a one-line comment.
+     * Specifies the token starting a one-line comment.
      */
     private static final String COMMENT_START_TOKEN = "//";
     
@@ -65,9 +65,17 @@ public class ToyVMAssembler {
     private final Map<String, String> mapStringNameToStringValue 
             = new HashMap<>();
     
+    private final Map<String, Integer> mapWordNameToAddress   = new HashMap<>();
+    private final Map<String, Integer> mapStringNameToAddress = new HashMap<>();
+    
+    private final Map<Integer, String> mapAddressToWordName = new HashMap<>();
+    private final Map<Integer, String> mapAddressToStringName = new HashMap<>();
+    
+    private final Map<Integer, String> mapAddressToName = new HashMap<>();
+    
+    private final List<String> pendingLabels = new ArrayList<>();
     private final String fileName;
     private int lineNumber = 1;
-    private final List<String> pendingLabels = new ArrayList<>();
     
     @FunctionalInterface
     private interface InstructionAssembler {
@@ -121,8 +129,36 @@ public class ToyVMAssembler {
         
         resolveWords();
         resolveStrings();
-        resolveLabels();
+        resolveLabels(); 
         return convertMachineCodeToByteArray();
+    }
+    
+    private void resolveWords() {
+        for (Map.Entry<String, Integer> entry : 
+                mapWordNameToWordValue.entrySet()) {
+            mapWordNameToAddress.put(entry.getKey(), machineCode.size());
+            emitData(entry.getValue());
+        }
+        
+        for (Map.Entry<Integer, String> entry :
+                mapAddressToWordName.entrySet()) {
+            setAddress(entry.getKey(),
+                       mapWordNameToAddress.get(entry.getValue()));
+        }
+    }
+    
+    private void resolveStrings() {
+        for (Map.Entry<String, String> entry :
+                mapStringNameToStringValue.entrySet()) {
+            mapStringNameToAddress.put(entry.getKey(), machineCode.size());
+            emitString(entry.getValue());
+        }
+        
+        for (Map.Entry<Integer, String> entry :
+                mapAddressToStringName.entrySet()) {
+            setAddress(entry.getKey(),
+                       mapStringNameToAddress.get(entry.getValue()));
+        }
     }
     
     // Resolves all symbolical references (labels).
@@ -132,7 +168,7 @@ public class ToyVMAssembler {
             
             if (!mapLabelToAddress.containsKey(label)) {
                 throw new AssemblyException(
-                        "Label \"" + label + "\" is not defined.");
+                        "ERROR: Label \"" + label + "\" is not defined.");
             }
             
             Integer address = mapLabelToAddress.get(label);
@@ -140,24 +176,8 @@ public class ToyVMAssembler {
         }
     }
     
-    private void resolveWords() {
-        for (Map.Entry<String, Integer> entry : 
-                mapWordNameToWordValue.entrySet()) {
-            mapLabelToAddress.put(entry.getKey(), machineCode.size());
-            emitData(entry.getValue());
-        }
-    }
-    
-    private void resolveStrings() {
-        for (Map.Entry<String, String> entry :
-                mapStringNameToStringValue.entrySet()) {
-            mapLabelToAddress.put(entry.getKey(), machineCode.size());
-            emitString(entry.getValue());
-        }
-    }
-    
     private void assembleSourceCodeLine(String line) {
-        // Prune the possible comment away.
+        // Prune the possible comment.
         line = line.split(COMMENT_START_TOKEN)[0].trim();
         // Deal with the possible label.
         String[] parts = handleLabel(line);
@@ -175,12 +195,8 @@ public class ToyVMAssembler {
                 
                 pendingLabels.clear();
                 actualLine = parts[1];
-            }
-            
-            if (parts[1].isEmpty()) {
-                return;
             } else {
-                actualLine = parts[1];
+                return;
             }
         }
         
@@ -191,7 +207,7 @@ public class ToyVMAssembler {
         if (instructionAssembler == null) {
             throw new AssemblyException(
                     errorHeader() +
-                    "Unknown instruction in line \"" + line + "\".");
+                    "Unknown instruction \"" + actualLine + "\".");
         }
         
         instructionAssembler.assemble(actualLine);
@@ -216,8 +232,9 @@ public class ToyVMAssembler {
                 return;
                 
             default:
-                throw new RuntimeException(
-                "Unknown register token: \"" + registerToken + "\".");
+                throw new AssemblyException(
+                        errorHeader() +
+                        "Unknown register token: \"" + registerToken + "\".");
         }
     }
     
@@ -242,6 +259,10 @@ public class ToyVMAssembler {
         machineCode.add((byte) 0);
     }
     
+    private void emitOpcode(byte opcode) {
+        machineCode.add(opcode);
+    }
+    
     private void setAddress(int index, int address) {
         machineCode.set(index, (byte)(address & 0xff));
         machineCode.set(index + 1, (byte)((address >>>= 8) & 0xff));
@@ -259,7 +280,7 @@ public class ToyVMAssembler {
                     "\"add regi regj\"");
         }
         
-        machineCode.add(ADD);
+        emitOpcode(ADD);
         emitRegister(tokens[1]);
         emitRegister(tokens[2]);
     }
@@ -274,7 +295,7 @@ public class ToyVMAssembler {
                     "\"neg regi\"");
         }
         
-        machineCode.add(NEG);
+        emitOpcode(NEG);
         emitRegister(tokens[1]);
     }
     
@@ -287,8 +308,8 @@ public class ToyVMAssembler {
                     "The 'mul' instruction requires exactly three tokens: " +
                     "\"mul regi regj\"");
         }
-        
-        machineCode.add(MUL);
+       
+        emitOpcode(MUL);
         emitRegister(tokens[1]);
         emitRegister(tokens[2]);
     }
@@ -303,7 +324,7 @@ public class ToyVMAssembler {
                     "\"div regi regj\"");
         }
         
-        machineCode.add(DIV);
+        emitOpcode(DIV);
         emitRegister(tokens[1]);
         emitRegister(tokens[2]);
     }
@@ -318,7 +339,7 @@ public class ToyVMAssembler {
                     "\"mod regi regj\"");
         }
         
-        machineCode.add(MOD);
+        emitOpcode(MOD);
         emitRegister(tokens[1]);
         emitRegister(tokens[2]);
     }
@@ -333,7 +354,7 @@ public class ToyVMAssembler {
                     "\"cmp regi regj\"");
         }
         
-        machineCode.add(CMP);
+        emitOpcode(CMP);
         emitRegister(tokens[1]);
         emitRegister(tokens[2]);
     }
@@ -348,7 +369,7 @@ public class ToyVMAssembler {
                     "\"ja label\" or \"ja address\"");
         }
         
-        machineCode.add(JA);
+        emitOpcode(JA);
         
         if (isHexInteger(tokens[1])) {
             emitAddress(hexStringToInteger(tokens[1]));
@@ -370,7 +391,7 @@ public class ToyVMAssembler {
                     "\"je label\" or \"je address\"");
         }
         
-        machineCode.add(JE);
+        emitOpcode(JE);
         
         if (isHexInteger(tokens[1])) {
             emitAddress(hexStringToInteger(tokens[1]));
@@ -392,7 +413,7 @@ public class ToyVMAssembler {
                     "\"jb label\" or \"jb address\"");
         }
         
-        machineCode.add(JB);
+        emitOpcode(JB);
         
         if (isHexInteger(tokens[1])) {
             emitAddress(hexStringToInteger(tokens[1]));
@@ -414,7 +435,7 @@ public class ToyVMAssembler {
                     "\"jmp label\" or \"jmp address\"");
         }
         
-        machineCode.add(JMP);
+        emitOpcode(JMP);
         
         if (isHexInteger(tokens[1])) {
             emitAddress(hexStringToInteger(tokens[1]));
@@ -436,7 +457,7 @@ public class ToyVMAssembler {
                     "\"call label\" or \"call address\"");
         }
         
-        machineCode.add(CALL);
+        emitOpcode(CALL);
         
         if (isHexInteger(tokens[1])) {
             emitAddress(hexStringToInteger(tokens[1]));
@@ -457,7 +478,7 @@ public class ToyVMAssembler {
                     "The 'ret' instruction must not have any arguments.");
         }
         
-        machineCode.add(RET);
+        emitOpcode(RET);
     }
     
     private void assembleLoad(String line) {
@@ -478,7 +499,7 @@ public class ToyVMAssembler {
         } else if (isInteger(tokens[2])) {
             emitAddress(toInteger(tokens[2]));
         } else {
-            mapAddressToLabel.put(machineCode.size(), tokens[2]);
+            mapAddressToName.put(machineCode.size(), tokens[2]);
             emitAddress(0);
         }
     }
@@ -501,7 +522,7 @@ public class ToyVMAssembler {
         } else if (isInteger(tokens[2])) {
             emitAddress(toInteger(tokens[2]));
         } else {
-            mapAddressToLabel.put(machineCode.size(), tokens[2]);
+            mapAddressToName.put(machineCode.size(), tokens[2]);
             emitAddress(0);
         }
     }
@@ -668,6 +689,19 @@ public class ToyVMAssembler {
                     "hexadecimal integer.");
         }
         
+        if (mapWordNameToWordValue.containsKey(tokens[1])) {
+            throw new AssemblyException(
+                    errorHeader() +
+                    "Word with name \"" + tokens[1] + "\" is already defined.");
+        }
+        
+        if (mapStringNameToStringValue.containsKey(tokens[1])) {
+            throw new AssemblyException(
+                    errorHeader() +
+                    "There is already a string with name \"" + tokens[1] + 
+                    "\"");
+        }
+        
         mapWordNameToWordValue.put(tokens[1], datum);
     }
     
@@ -704,6 +738,19 @@ public class ToyVMAssembler {
                     errorHeader() + 
                     "The 'str' instruction requireis exactly three tokens: " +
                     "\"str name value\"");
+        }
+        
+        if (mapStringNameToStringValue.containsKey(tokens[1])) {
+            throw new AssemblyException(
+                    errorHeader() +
+                    "String with name \"" + tokens[1] + 
+                    "\" is alredy defined.");
+        }
+        
+        if (mapWordNameToWordValue.containsKey(tokens[1])) {
+            throw new AssemblyException(
+                    errorHeader() +
+                    "There is alread a word with name \"" + tokens[1] + "\"");
         }
         
         mapStringNameToStringValue.put(tokens[1], str);
@@ -760,6 +807,7 @@ public class ToyVMAssembler {
         
         if (line.indexOf(":", colonIndex + 1) != -1) {
             throw new AssemblyException(
+                    errorHeader() +
                     "Only one label allowed per line. The input line is \"" +
                     line + "\".");
         }
