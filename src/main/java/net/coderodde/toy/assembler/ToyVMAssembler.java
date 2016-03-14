@@ -789,7 +789,7 @@ public class ToyVMAssembler {
     
     private boolean isHexInteger(String token) {
         if (token.length() < 3 
-                || (!token.startsWith("0x") || !token.startsWith("0x"))) {
+                || (!token.startsWith("0X") && !token.startsWith("0x"))) {
             return false;
         }
         
@@ -809,7 +809,7 @@ public class ToyVMAssembler {
                     "The input token is not a hexadecimal number.");
         }
         
-        return Integer.parseInt(token, 16); 
+        return Integer.parseInt(token.substring(2).toLowerCase(), 16); 
     }
     
     private int toInteger(String token) {
@@ -834,9 +834,15 @@ public class ToyVMAssembler {
                     line + "\".");
         }
         
+        String label = line.substring(0, colonIndex).trim();
+        String actualLine = line.substring(colonIndex + 1,
+                                           line.length()).trim();
+        
+        this.mapLabelToAddress.put(label, machineCode.size());
+        
         return new String[] { 
-            line.substring(0, colonIndex).trim(),
-            line.substring(colonIndex + 1, line.length()).trim() 
+            label,
+            actualLine
         };
     }
     
