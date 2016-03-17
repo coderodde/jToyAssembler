@@ -32,7 +32,7 @@ public class App {
                         "ERROR: File \"" + file.getAbsolutePath() + "\" " +
                         "is not found.");
             } catch (AssemblyException | IOException ex) {
-                System.err.println("ERROR: " + ex.getMessage());
+                System.err.println(ex.getMessage());
             }
         }
     }

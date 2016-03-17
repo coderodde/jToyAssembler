@@ -872,6 +872,13 @@ public class ToyVMAssembler {
         }
 
         String label = line.substring(0, colonIndex).trim();
+        
+        if (mapOpcodeToAssembler.containsKey(label)) {
+            throw new AssemblyException(
+                    errorHeader() +
+                    "An opcode name cannot be used as a label.");
+        }
+        
         String actualLine = line.substring(colonIndex + 1,
                                            line.length()).trim();
 
