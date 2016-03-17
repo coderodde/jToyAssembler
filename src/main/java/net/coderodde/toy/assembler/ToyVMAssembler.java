@@ -735,6 +735,13 @@ public class ToyVMAssembler {
                     "\"word name value\"");
         }
 
+        if (mapOpcodeToAssembler.containsKey(tokens[1])) {
+            throw new AssemblyException(
+                    errorHeader() +
+                    "A word cannot be named with a mnemonic: \"" + tokens[1] +
+                    "\"");
+        }
+        
         int datum;
 
         if (isHexInteger(tokens[2])) {
@@ -798,6 +805,13 @@ public class ToyVMAssembler {
                     "\"str name value\"");
         }
 
+        if (mapOpcodeToAssembler.containsKey(tokens[1])) {
+            throw new AssemblyException(
+                    errorHeader() +
+                    "A string cannot be names with a mnemonic: \"" + 
+                    tokens[1] + "\"");
+        }
+        
         if (mapStringNameToStringValue.containsKey(tokens[1])) {
             throw new AssemblyException(
                     errorHeader() +
