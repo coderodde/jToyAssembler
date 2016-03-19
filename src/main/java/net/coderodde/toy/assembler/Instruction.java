@@ -13,8 +13,6 @@ import java.util.Objects;
  */
 public class Instruction {
    
-    
-    
     private final String opcodeMnemonic;
     private final byte opcode;
     private final List<TokenDescriptor> argumentTokenDescriptorList;
@@ -60,6 +58,19 @@ public class Instruction {
         switch (tokenDescriptor) {
             case REGISTER:
                 emitRegister(token, code);
+                break;
+//               
+//            case ADDRESS:
+//                emitAddress(token, code);
+//                break;
+//                
+//            case WORD_DATA:
+//                emitWordData(token, code);
+//                break;
+//                
+//            case BYTE_DATA:
+//                emitByteData(token, code);
+//                break;
         }
     }
     

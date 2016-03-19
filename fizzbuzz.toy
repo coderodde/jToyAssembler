@@ -1,0 +1,78 @@
+    const reg4 100
+    const reg2 1
+
+loop_begin: // The main loop counting from 1 to 100
+
+    add reg2 reg1
+    cmp reg1 reg4
+    ja end
+    pusha
+    push reg1
+    call print_function
+    pop reg1
+    popa
+    jmp loop_begin
+
+print_function: // The function responsible
+		// for printing the relevant token
+
+    lsp reg1
+    const reg2 4
+    add reg2 reg1
+    rload reg1 reg1
+    const reg2 15
+    mod reg1 reg2
+    const reg3 0
+    cmp reg2 reg3
+    ja try_5
+    jb try_5
+    const reg3 str_fb
+    push reg3
+    int 2
+    jmp end_of_print_function
+
+try_5:
+
+    const reg2 5
+    mod reg1 reg2
+    const reg3 0
+    cmp reg2 reg3
+    ja try_3
+    jb try_3
+    const reg3 str_b
+    push reg3
+    int 2
+    jmp end_of_print_function
+
+try_3:
+
+    const reg2 3
+    mod reg1 reg2
+    const reg3 0
+    cmp reg2 reg3
+    ja no_match
+    jb no_match
+    const reg3 str_f
+    push reg3
+    int 2
+    jmp end_of_print_function
+
+no_match: // Just print the line number.
+
+    push reg1
+    int 1
+    const reg4 str_nl
+    push reg4
+    int 2
+
+end_of_print_function:
+    ret
+
+end:
+    halt
+
+    str str_fb "FizzBuzz\n"
+    str str_f  "Fizz\n"
+    str str_b  "Buzz\n"
+    str str_nl "\n"
+    
